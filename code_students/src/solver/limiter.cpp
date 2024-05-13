@@ -27,5 +27,5 @@ double limiter_minmod::compute(double first, double second, double third) {
 	}
 
 	// find min and restore sign
-	return sign * fmin(fmin(first, second), third);
+	return sign * std::fmin(fmin(first, second), third);
 }
