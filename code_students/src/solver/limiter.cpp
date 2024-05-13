@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 
 limiter_base::limiter_base() {}
 
