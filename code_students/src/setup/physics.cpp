@@ -80,21 +80,35 @@ void physics::get_physical_fluxes(const fluid_cell &fluid, fluxes_cell &fluxes, 
 	// fluxes.flux_data[fluid.get_index_density()] = fluid_cell.fluid_data[]
 	if (local_direction == parallelisation::direction::x) {
 		fluxes.flux_data[fluid.get_index_density()] = density * v_x;
-		fluxes.flux_data[fluid.get_index_v_x()] = 0.0;    // TBD by students
-		fluxes.flux_data[fluid.get_index_v_y()] = 0.0;    // TBD by students
-		fluxes.flux_data[fluid.get_index_v_z()] = 0.0;    // TBD by students
-		fluxes.flux_data[fluid.get_index_energy()] = 0.0; // TBD by students
+		// TBD by students
+		fluxes.flux_data[fluid.get_index_v_x()] = density * v_x * v_x + pressure;
+		fluxes.flux_data[fluid.get_index_v_y()] = density * v_x * v_y;
+		fluxes.flux_data[fluid.get_index_v_z()] = density * v_x * v_z;
+		fluxes.flux_data[fluid.get_index_energy()] = (e_total + pressure) * v_x;
 		fluxes.flux_data[fluid.get_index_tracer()] = tracer * v_x;
 	} else if (local_direction == parallelisation::direction::y) {
 		// TBD by students
+		fluxes.flux_data[fluid.get_index_density()] = density * v_y;
+		fluxes.flux_data[fluid.get_index_v_x()] = density * v_y * v_x;
+		fluxes.flux_data[fluid.get_index_v_y()] = density * v_y * v_y + pressure;
+		fluxes.flux_data[fluid.get_index_v_z()] = density * v_y * v_z;
+		fluxes.flux_data[fluid.get_index_energy()] = (e_total  + pressure) * v_y;
+		fluxes.flux_data[fluid.get_index_tracer()] = tracer * v_y;
 	} else {
 		// TBD by students
+		fluxes.flux_data[fluid.get_index_density()] = density * v_z;
+		fluxes.flux_data[fluid.get_index_v_x()] = density * v_z * v_x;
+		fluxes.flux_data[fluid.get_index_v_y()] = density * v_z * v_y;
+		fluxes.flux_data[fluid.get_index_v_z()] = density * v_z * v_z + pressure;
+		fluxes.flux_data[fluid.get_index_energy()] = (e_total + pressure) * v_z;
+		fluxes.flux_data[fluid.get_index_tracer()] = tracer * v_z;
 	}
 }
 
 double physics::get_sound_speed(double density, double pressure) {
 	// TBD by students
-	return 42.0;
+	// Lecture 3: 3.1 Schallgeschwindigkeit 
+	return sqrt(adiabatic_index * pressure/density);
 }
 
 double physics::get_lambda_abs_max(const fluid_cell &fluid) {
@@ -122,22 +136,24 @@ void physics::get_lambda_min_max(double &lambda_min, double &lambda_max, const f
 	int index_velocity_parallel = fluid_left_cell.get_index_v_x();
 	if (local_direction == parallelisation::direction::y) {
 		// TBD by students
+		index_velocity_parallel = fluid_left_cell.get_index_v_y();
 	} else if (local_direction == parallelisation::direction::z) {
 		// TBD by students
+		index_velocity_parallel = fluid_left_cell.get_index_v_z();
 	}
 
-	double density_left = 42.0;  // TBD by students
-	double density_right = 42.0; // TBD by students
+	double density_left = fluid_left_cell.fluid_data[index_density];  // TBD by students
+	double density_right = fluid_right_cell.fluid_data[index_density]; // TBD by students
 
 	double v_parallel_left = fluid_left_cell.fluid_data[index_velocity_parallel];
-	double v_parallel_right = 42.0; // TBD by students
+	double v_parallel_right = fluid_right_cell.fluid_data[index_velocity_parallel]; // TBD by students
 
 	double pressure_left = get_pressure(fluid_left_cell);
-	double pressure_right = 42.0; // TBD by students
+	double pressure_right = get_pressure(fluid_right_cell); // TBD by students
 
 	double sound_speed_left = get_sound_speed(density_left, pressure_left);
-	double sound_speed_right = 42.0; // TBD by students
+	double sound_speed_right = get_sound_speed(density_right, pressure_right); // TBD by students
 
 	lambda_max = std::max(v_parallel_left + sound_speed_left, v_parallel_right + sound_speed_right);
-	lambda_min = 42.0; // TBD by students
+	lambda_min = std::min(v_parallel_left - sound_speed_left, v_parallel_right - sound_speed_right); // TBD by students
 }
