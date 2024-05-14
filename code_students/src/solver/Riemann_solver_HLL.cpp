@@ -15,9 +15,19 @@ void HLL_solver::get_num_flux(fluid_cell &fluid_left_cell, fluid_cell &fluid_rig
 	} else if (v_char_fastest < 0.0) {
 
 		// TBD by students
+		for (std::size_t i_field = 0; i_field < num_fields; i_field++) {
+			num_flux[i_field] = phys_flux_right_cell[i_field];
+		}
 
 	} else {
 
 		// TBD by students
+		for (std::size_t i_field = 0; i_field < num_fields; i_field++) {
+		 	num_flux[i_field] = (
+				+ v_char_fastest*phys_flux_left_cell[i_field] 
+				- v_char_slowest*phys_flux_right_cell[i_field]
+				+ v_char_fastest*v_char_slowest*(fluid_right_cell.fluid_data[i_field]-fluid_left_cell.fluid_data[i_field])
+			)/(v_char_fastest-v_char_slowest);
+		}
 	}
 }
