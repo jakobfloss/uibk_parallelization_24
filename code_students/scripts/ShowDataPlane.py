@@ -6,7 +6,7 @@ from matplotlib.colors import LogNorm
 import numpy as np
 
 
-path_data = "/put/your/path/here/code/build"
+path_data = "../build_release/apps/"
 
 
 class plane_type(Enum) :
@@ -164,7 +164,7 @@ class data_plotter() :
         fig.savefig(output_name)
 
 def analysis_single_plane() :
-    file_name = "output_step140.h5"
+    file_name = "output_step135.h5"
     full_name = path_data + "/" + file_name;
     my_reader = data_reader(full_name)
     
@@ -186,7 +186,7 @@ def analysis_single_plane() :
 
 def analysis_3D() :
     # Here we do a joint plot of all 3 midplanes
-    file_name = "output_step140.h5"
+    file_name = "output_step135.h5"
     full_name = path_data + "/" + file_name;
     my_reader = data_reader(full_name)    
     
@@ -210,7 +210,7 @@ def analysis_3D() :
     
 def analysis_3D_projected() :
     # Here we do a joint plot of all 3 midplanes
-    file_name = "output_step140.h5"
+    file_name = "output_step135.h5"
     full_name = path_data + "/" + file_name;
     my_reader = data_reader(full_name)    
     
@@ -242,6 +242,6 @@ def analysis_3D_projected() :
                     x_grid, y_grid, z_grid, "plot_3D_projeced.pdf")    
             
 if __name__ == "__main__" :
-    analysis_single_plane()
-    #analysis_3D()
-    #analysis_3D_projected()
+    # analysis_single_plane()
+    # analysis_3D()
+    analysis_3D_projected()
