@@ -14,10 +14,10 @@
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
-#pragma GCC diagnostic push
+#pragma GCC diagnostic pop
 
-constexpr int default_size_x = 1280;
-constexpr int default_size_y = 720;
+constexpr int default_size_x = 1344;
+constexpr int default_size_y = 768;
 
 // RGB image will hold 3 color channels
 constexpr int num_channels = 3;
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
 	calcMandelbrot(image, size_x, size_y);
 
 	constexpr int stride_bytes = 0;
-	stbi_write_png("mandelbrot_seq.png", size_x, size_y, num_channels, image.data(), stride_bytes);
+	stbi_write_png("mandelbrot_mpi.png", size_x, size_y, num_channels, image.data(), stride_bytes);
 
 	return EXIT_SUCCESS;
 }
