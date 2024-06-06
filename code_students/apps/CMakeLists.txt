@@ -3,10 +3,11 @@ cmake_minimum_required(VERSION 3.10)
 
 add_executable (run_full_code
     main_full_code.cpp
-    )
+)
 
 target_include_directories(run_full_code
     PUBLIC ${CODE_INCLUDE_DIR}
+    PUBLIC ${MPI_CXX_INCLUDE_PATH}
 )
 
 target_link_libraries(run_full_code
@@ -23,6 +24,11 @@ add_executable (run_full_code_mpi
     main_full_code_mpi.cpp
     )
 
+target_compile_definitions(run_full_code_mpi
+    PRIVATE PARALLEL_VERSION
+    PUBLIC OMPI_SKIP_MPICXX
+)
+
 target_include_directories(run_full_code_mpi
     PUBLIC ${CODE_INCLUDE_DIR}
 )
@@ -31,6 +37,8 @@ target_link_libraries(run_full_code_mpi
     PUBLIC utilities
     PUBLIC sim_setup
     PUBLIC solver
+    PUBLIC mpi_stuff
+    PUBLIC ${MPI_CXX_LIBRARIES}
 )
 
 install(TARGETS run_full_code_mpi

@@ -7,8 +7,11 @@
 #include "util/utility_functions.hpp"
 
 #include <cmath>
+#include <cstdlib>
 #include <functional>
 #include <iostream>
+
+#include <mpi.h>
 
 double Sedov_volume;
 
@@ -32,7 +35,17 @@ void init_Sedov(fluid_cell &fluid, double x_position, double y_position, double 
 	fluid.fluid_data[fluid.get_index_v_z()] = 0.0;
 }
 
-int main() {
+int main(int argc, char **argv) {
+
+	MPI_Init(&argc, &argv);
+	int w_size;
+	int rank;
+	MPI_Comm_size(MPI_COMM_WORLD, &w_size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	printf("I am rank %d\n", rank);
+
+	return EXIT_FAILURE;
+
 	std::vector<double> bound_low(3), bound_up(3);
 	bound_low[0] = -0.5;
 	bound_low[1] = -0.5;
