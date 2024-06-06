@@ -27,5 +27,5 @@ This task will focus on the [Mandelbrot set](https://en.wikipedia.org/wiki/Mande
 
 - You are free to choose how you compile the codes, but e.g. you can use `cmake` using the provided `CMakeLists.txt`:
   - load relatively modern versions of cmake, gcc and OpenMPI: `module load gcc/12.2.0-gcc-8.5.0-p4pe45v openmpi/3.1.6-gcc-12.2.0-d2gmn55`
-  - compile the codes: `mkdir build && cmake .. -DCMAKE_BUILD_TYPE=Release`
+  - compile the codes: `mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release`
   - done
