@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <tuple>
 #include <vector>
+#include <mpi.h>
 
 // Include that allows to print result as an image
 // Also, ignore some warnings that pop up when compiling this as C++ mode
@@ -78,6 +79,21 @@ void calcMandelbrot(Image &image, int size_x, int size_y) {
 	//   - ensure every rank is computing its own part only
 	// 2) result aggregation
 	//   - aggregate the individual parts of the ranks into a single, complete image on the root rank (rank 0)
+	
+	int mpi_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	// 1) separate vertically (along y axis) into subdomains
+	
+	// calculate the size along x
+	int dom_size_x = size_x / mpi_size;
+
+	for (int i_rank = 0; i_rank < size_x%mpi_size; i_rank++){
+		dom_size_x += 1;
+	}
 
 	for (int pixel_y = 0; pixel_y < size_y; pixel_y++) {
 		// scale y pixel into mandelbrot coordinate system
@@ -117,6 +133,8 @@ void calcMandelbrot(Image &image, int size_x, int size_y) {
 }
 
 int main(int argc, char **argv) {
+
+	MPI_Init(&argc, &argv);
 
 	int size_x = default_size_x;
 	int size_y = default_size_y;
