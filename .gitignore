@@ -3,5 +3,6 @@
 code_students/bin
 build
 build_release
+build_code_students
 *.pdf
 *.png

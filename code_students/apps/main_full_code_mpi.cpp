@@ -1,6 +1,7 @@
 #include "core/config.hpp"
 #include "setup/fluid.hpp"
 #include "setup/grid.hpp"
+#include "setup/mpi_handler.hpp"
 #include "solver/finite_volume_solver.hpp"
 #include "solver/time_integrator.hpp"
 #include "util/matrix.hpp"
@@ -12,6 +13,7 @@
 #include <iostream>
 
 #include <mpi.h>
+#include <vector>
 
 double Sedov_volume;
 
@@ -38,13 +40,12 @@ void init_Sedov(fluid_cell &fluid, double x_position, double y_position, double 
 int main(int argc, char **argv) {
 
 	MPI_Init(&argc, &argv);
-	int w_size;
-	int rank;
-	MPI_Comm_size(MPI_COMM_WORLD, &w_size);
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	printf("I am rank %d\n", rank);
+	std::vector<int> tasks(3);
+	tasks[0] = 2;
+	tasks[1] = 2;
+	tasks[2] = 1;
 
-	return EXIT_FAILURE;
+	mpi_handler handler(tasks);
 
 	std::vector<double> bound_low(3), bound_up(3);
 	bound_low[0] = -0.5;
@@ -60,7 +61,12 @@ int main(int argc, char **argv) {
 	num_cells[1] = 128;
 	num_cells[2] = 128;
 
-	grid_3D my_grid(bound_low, bound_up, num_cells, 2);
+	
+	grid_3D global_grid(bound_low, bound_up, num_cells, 2);
+	grid_3D my_grid = handler.make_local_grid(global_grid);
+
+	MPI_Finalize();
+	return 0;
 
 	// Get number of Sedov cells
 	Sedov_volume = 0.0;
