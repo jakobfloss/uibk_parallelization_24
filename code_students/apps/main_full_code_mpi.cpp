@@ -65,29 +65,39 @@ int main(int argc, char **argv) {
 	grid_3D global_grid(bound_low, bound_up, num_cells, 2);
 	grid_3D my_grid = handler.make_local_grid(global_grid);
 
-	MPI_Finalize();
-	return 0;
-
 	// Get number of Sedov cells
 	Sedov_volume = 0.0;
-	int num_Sedov_cells = 0;
+	int num_Sedov_cells_local = 0;
+	double Sedov_volume_local = 0;
 	double volume_cell = my_grid.x_grid.get_dx() * my_grid.y_grid.get_dx() * my_grid.z_grid.get_dx();
 
+	// loop over x
 	for (int ix = 0; ix < my_grid.get_num_cells(0); ++ix) {
 		double x_position = my_grid.x_grid.get_center(ix);
+		// loop over y
 		for (int iy = 0; iy < my_grid.get_num_cells(1); ++iy) {
 			double y_position = my_grid.y_grid.get_center(iy);
+			// loop over z
 			for (int iz = 0; iz < my_grid.get_num_cells(2); ++iz) {
 				double z_position = my_grid.z_grid.get_center(iz);
+
 				double dist = sqrt(sim_util::square(x_position) + sim_util::square(y_position) + sim_util::square(z_position));
 				if (dist < 0.1) {
-					Sedov_volume += volume_cell;
-					num_Sedov_cells++;
+					Sedov_volume_local += volume_cell;
+					num_Sedov_cells_local++;
 				}
 			}
 		}
 	}
-	std::cout << " Volume of Sedov region: " << Sedov_volume << " in " << num_Sedov_cells << " cells\n";
+	int num_Sedov_cells_global;
+	MPI_Allreduce(&num_Sedov_cells_local, &num_Sedov_cells_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(&Sedov_volume_local,&Sedov_volume, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	
+	std::cout << " local Volume of Sedov region: " << Sedov_volume_local << " in " << num_Sedov_cells_local << " cells\n";
+	std::cout << " global Volume of Sedov region: " << Sedov_volume << " in " << num_Sedov_cells_global << " cells\n";
+
+	MPI_Finalize();
+	return EXIT_SUCCESS;
 
 	// Now, I will create a HD fluid
 	fluid hd_fluid(parallelisation::FluidType::adiabatic);
