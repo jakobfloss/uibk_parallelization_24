@@ -25,7 +25,7 @@ add_executable (run_full_code_mpi
     )
 
 target_compile_definitions(run_full_code_mpi
-    PRIVATE PARALLEL_VERSION
+    PUBLIC PARALLEL_VERSION
     PUBLIC OMPI_SKIP_MPICXX
 )
 
