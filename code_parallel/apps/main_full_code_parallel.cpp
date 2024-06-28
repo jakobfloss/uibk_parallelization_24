@@ -68,8 +68,8 @@ int main(int argc, char *argv[]) {
 
 	std::vector<int> tasks(3);
 	tasks[0] = 2;
-	tasks[1] = 1;
-	tasks[2] = 1;
+	tasks[1] = 2;
+	tasks[2] = 2;
 
 	// Start the MPI handler
 	mpi_handler parallel_stuff(tasks);
@@ -119,6 +119,10 @@ int main(int argc, char *argv[]) {
 	if(parallel_stuff.get_rank()==0) {
 		std::cout << " Volume of Sedov region: " << Sedov_volume << " in " << num_Sedov_cells << " cells\n";
 	}
+	if(parallel_stuff.get_rank()==1) {
+		std::cout << " Volume of Sedov region: " << Sedov_volume << " in " << num_Sedov_cells << " cells\n";
+	}
+
 
 	// MPI_Finalize();
 	// return 0;
