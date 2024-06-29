@@ -91,6 +91,7 @@ void calcMandelbrot(Image &image, int size_x, int size_y) {
 	// calculate the size along x
 	int dom_size_x = size_x / mpi_size;
 
+	// distribute remainder along  first ranks
 	for (int i_rank = 0; i_rank < size_x%mpi_size; i_rank++){
 		dom_size_x += 1;
 	}
@@ -135,6 +136,14 @@ void calcMandelbrot(Image &image, int size_x, int size_y) {
 int main(int argc, char **argv) {
 
 	MPI_Init(&argc, &argv);
+
+		int mpi_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	std::cout << "I am rank " << rank " of " << mpi_size << " ranks" << std::endl;
 
 	int size_x = default_size_x;
 	int size_y = default_size_y;
