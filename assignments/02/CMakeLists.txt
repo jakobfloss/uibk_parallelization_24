@@ -13,5 +13,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(mandelbrot_seq mandelbrot_seq.cpp)
 
-add_executable(mandelbrot_mpi mandelbrot_mpi.cpp)
-target_link_libraries(mandelbrot_mpi PUBLIC MPI::MPI_C)
+add_executable(mandelbrot_mpi_reduce mandelbrot_mpi_reduce.cpp)
+target_link_libraries(mandelbrot_mpi_reduce PUBLIC MPI::MPI_C)
+
+add_executable(mandelbrot_mpi_gather mandelbrot_mpi_gather.cpp)
+target_link_libraries(mandelbrot_mpi_gather PUBLIC MPI::MPI_C)

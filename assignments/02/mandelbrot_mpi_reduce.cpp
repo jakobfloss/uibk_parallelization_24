@@ -1,5 +1,7 @@
 #include <bits/chrono.h>
+#include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <chrono>
@@ -67,9 +69,14 @@ auto HSVToRGB(double H, const double S, double V) {
 }
 
 void calcMandelbrot(Image &image, int size_x, int size_y) {
+	int mpi_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	auto time_start = std::chrono::high_resolution_clock::now();
-	
+
 	const float left = -2.5, right = 1;
 	const float bottom = -1, top = 1;
 
@@ -79,27 +86,22 @@ void calcMandelbrot(Image &image, int size_x, int size_y) {
 	//   - ensure every rank is computing its own part only
 	// 2) result aggregation
 	//   - aggregate the individual parts of the ranks into a single, complete image on the root rank (rank 0)
-	
-	int mpi_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	// 1) separate vertically (along y axis) into subdomains
-	
+
 	// calculate the size along x
 	int dom_size_x = size_x / mpi_size;
 
 	// distribute remainder along  first ranks
-	for (int i_rank = 0; i_rank < size_x%mpi_size; i_rank++){
-		dom_size_x += 1;
-	}
+	int dom_x_min = rank * dom_size_x;
+	int dom_x_max = dom_x_min + dom_size_x;
+
+	std::cout << "dom_x_max: " << dom_x_max << std::endl;
 
 	for (int pixel_y = 0; pixel_y < size_y; pixel_y++) {
 		// scale y pixel into mandelbrot coordinate system
 		const float cy = (pixel_y / (float)size_y) * (top - bottom) + bottom;
-		for (int pixel_x = 0; pixel_x < size_x; pixel_x++) {
+		for (int pixel_x = dom_x_min; pixel_x < dom_x_max; pixel_x++) {
 			// scale x pixel into mandelbrot coordinate system
 			const float cx = (pixel_x / (float)size_x) * (right - left) + left;
 			float x = 0;
@@ -126,42 +128,80 @@ void calcMandelbrot(Image &image, int size_x, int size_y) {
 			image[index(pixel_y, pixel_x, size_y, size_x, channel++)] = (uint8_t)(blue * UINT8_MAX);
 		}
 	}
-	
-	auto time_end = std::chrono::high_resolution_clock::now();
-	auto time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_start).count();
-	
-	std::cout << "Mandelbrot set calculation for " << size_x << "x" << size_y << " took: " << time_elapsed << " ms." << std::endl;
+
+
+	std::cout << "Domain calculated succesfully, merging calculated images" << std::endl;
+	fflush(stdout);
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	int buff_size = num_channels * size_x * size_y;
+	Image recv_buff(buff_size);
+	recv_buff[buff_size-1] = 10;
+
+	std::cout << "send buffer size: " << buff_size << std::endl;
+
+	// MPI_Allreduce(MPI_IN_PLACE, &image[0], buff_size, MPI_UINT8_T, MPI_MAX, MPI_COMM_WORLD);
+
+	if (rank != 0) {
+		MPI_Reduce(&image[0], &recv_buff[0], buff_size, MPI_UINT8_T, MPI_MAX, 0, MPI_COMM_WORLD);
+	}
+
+	if (rank == 0) {
+		MPI_Reduce(&image[0], &recv_buff[0], buff_size, MPI_UINT8_T, MPI_MAX, 0, MPI_COMM_WORLD);
+		image = recv_buff;
+	}
+
+	if (rank == 0){
+		auto time_end = std::chrono::high_resolution_clock::now();
+		auto time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_start).count();
+		
+		std::cout << "Mandelbrot set calculation for " << size_x << "x" << size_y << " took: " << time_elapsed << " ms." << std::endl;
+	}
 }
 
 int main(int argc, char **argv) {
 
 	MPI_Init(&argc, &argv);
 
-		int mpi_size;
+	int mpi_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	std::cout << "I am rank " << rank " of " << mpi_size << " ranks" << std::endl;
-
+	std::cout << "I am rank " << rank << " of " << mpi_size << " ranks" << std::endl;
+	
 	int size_x = default_size_x;
 	int size_y = default_size_y;
 
 	if (argc == 3) {
 		size_x = atoi(argv[1]);
 		size_y = atoi(argv[2]);
-		std::cout << "Using size " << size_x << "x" << size_y << std::endl;
-	} else {
+		if (rank == 0) {
+			std::cout << "Using size " << size_x << "x" << size_y << std::endl;
+		}
+	} else if (rank == 0) {
 		std::cout << "No arguments given, using default size " << size_x << "x" << size_y << std::endl;
+	}
+
+	// if not possible to divide even crash
+	if ((rank == 0) && (size_x % mpi_size != 0)) {
+		std::cout << "ERROR: Wrong number of processes" << std::endl;
+		std::cout << "Please make sure size_x is divisible by process count" << std::endl;
+		std::cout << "(size_x: " << size_x << ")" << std::endl;
+		return EXIT_FAILURE;
 	}
 
 	Image image(num_channels * size_x * size_y);
 
 	calcMandelbrot(image, size_x, size_y);
 
-	constexpr int stride_bytes = 0;
-	stbi_write_png("mandelbrot_mpi.png", size_x, size_y, num_channels, image.data(), stride_bytes);
+	if (rank == 0) {
+		constexpr int stride_bytes = 0;
+		stbi_write_png("mandelbrot_mpi_reduce.png", size_x, size_y, num_channels, image.data(), stride_bytes);
+	}
+
+	MPI_Finalize();
 
 	return EXIT_SUCCESS;
 }
