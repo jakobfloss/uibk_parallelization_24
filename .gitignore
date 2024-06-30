@@ -4,5 +4,6 @@ code_students/bin
 build
 build_release
 build_code_students
+*/compile_commands.json
 *.pdf
 *.png
