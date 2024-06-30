@@ -75,6 +75,7 @@ grid_3D mpi_handler::make_local_grid(const grid_3D &global_grid) {
 
 	std::vector<double> bound_up_global(3);
 	// TBD by students
+	// bound_up_global[0] = global_grid.x_grid.get_right(num_cells_global[0]-1);
 	bound_up_global[0] = global_grid.x_grid.get_left(num_cells_global[0]);
 	bound_up_global[1] = global_grid.y_grid.get_left(num_cells_global[1]);
 	bound_up_global[2] = global_grid.z_grid.get_left(num_cells_global[2]);
@@ -98,6 +99,8 @@ grid_3D mpi_handler::make_local_grid(const grid_3D &global_grid) {
 			// TBD by students
 			num_cells_local[i_dim] = num_cells_global[i_dim] / num_tasks[i_dim];
 		} else {
+			std::cerr << " Wrong number of processes \n";
+			std::cerr << " Dimension " << i_dim << " not divisible by process count \n";
 			std::cerr << " Only considering homogeneous distribution \n";
 			exit(3);
 		}

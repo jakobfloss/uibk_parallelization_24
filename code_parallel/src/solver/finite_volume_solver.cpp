@@ -344,7 +344,8 @@ void finite_volume_solver::apply_boundary_conditions(grid_3D &spatial_grid, flui
 				for (int ix = 0; ix < Nx; ++ix) {
 					for (int iy = -1; iy >= -2; --iy) {
 						for (int iz = 0; iz < Nz; ++iz) {
-							current_fluid.fluid_data[i_field](ix, iy, iz) = current_fluid.fluid_data[i_field](ix, iy + 1, iz); // iy + 1 could simply be 0 i think
+							current_fluid.fluid_data[i_field](ix, iy, iz) = current_fluid.fluid_data[i_field](ix, iy + 1, iz);
+							// iy + 1 could simply be 0 i think
 						}
 					}
 				}
@@ -438,7 +439,7 @@ void finite_volume_solver::apply_boundary_conditions(grid_3D &spatial_grid, flui
 			for (int ix = 0; ix < Nx; ix++) {
 				for(int iy = 0; iy < Ny; iy++) {
 					for (int iz = Nz-2; iz < Nz; iz++) { // send last two planes in Z (from low to high Z)
-						buff_send_y[i_buff] = current_fluid.fluid_data[i_field](ix, iy, iz);
+						buff_send_z[i_buff] = current_fluid.fluid_data[i_field](ix, iy, iz);
 						i_buff++;
 					}
 				}
@@ -453,9 +454,9 @@ void finite_volume_solver::apply_boundary_conditions(grid_3D &spatial_grid, flui
 			if(src_rank==MPI_PROC_NULL) {
 				for (int ix = 0; ix < Nx; ++ix) {
 					for (int iy = 0; iy < Ny; ++iy) {
-						for (int iz = -2; iz < 0; ++iz) {
+						for (int iz = -1; iz >= -2; --iz) {
 							// Plane from above is copied -> Zero Gradient Boundary
-							current_fluid.fluid_data[i_field](ix, iy, iz) = current_fluid.fluid_data[i_field](ix, iy, 0);
+							current_fluid.fluid_data[i_field](ix, iy, iz) = current_fluid.fluid_data[i_field](ix, iy, iz + 1);
 						}
 					}
 				}
@@ -464,7 +465,7 @@ void finite_volume_solver::apply_boundary_conditions(grid_3D &spatial_grid, flui
 				for (int ix = 0; ix < Nx; ++ix) {
 					for (int iy = 0; iy < Ny; ++iy) {
 						for (int iz = -2; iz < 0; ++iz) { // recv first two planes (from low to high Z)
-							current_fluid.fluid_data[i_field](ix, iy, iz) = buff_recv_y[i_buff];
+							current_fluid.fluid_data[i_field](ix, iy, iz) = buff_recv_z[i_buff];
 							i_buff++;
 						}
 					}
@@ -487,7 +488,7 @@ void finite_volume_solver::apply_boundary_conditions(grid_3D &spatial_grid, flui
 			for (int ix = 0; ix < Nx; ++ix) {
 				for(int iy = 0; iy < Ny; ++iy) {
 					for (int iz = 0; iz < 2; ++iz) { // send first two planes (from low to high Z)
-						buff_send_y[i_buff] = current_fluid.fluid_data[i_field](ix, iy, iz);
+						buff_send_z[i_buff] = current_fluid.fluid_data[i_field](ix, iy, iz);
 						i_buff++;
 					}
 				}
@@ -504,7 +505,7 @@ void finite_volume_solver::apply_boundary_conditions(grid_3D &spatial_grid, flui
 					for (int iy = 0; iy < Ny; ++iy) {
 						for (int iz = Nz; iz < Nz + 2; ++iz) {
 							// copy plane from below -> zero gradient boundary
-							current_fluid.fluid_data[i_field](ix, iy, iz) = current_fluid.fluid_data[i_field](ix, iy, Nz - 1);
+							current_fluid.fluid_data[i_field](ix, iy, iz) = current_fluid.fluid_data[i_field](ix, iy, iz - 1);
 						}
 					}
 				}
@@ -513,7 +514,7 @@ void finite_volume_solver::apply_boundary_conditions(grid_3D &spatial_grid, flui
 				for (int ix = 0; ix < Nx; ++ix) {
 					for (int iy = 0; iy < Ny; ++iy) {
 						for (int iz = Nz; iz < Nz + 2; ++iz) { // recv last two planes (from low to high Z)
-							current_fluid.fluid_data[i_field](ix, iy, iz) = buff_recv_y[i_buff];
+							current_fluid.fluid_data[i_field](ix, iy, iz) = buff_recv_z[i_buff];
 							i_buff++;
 						}
 					}
@@ -629,13 +630,13 @@ double finite_volume_solver::get_CFL(grid_3D &spatial_grid, fluid &current_fluid
 #ifdef PARALLEL_VERSION
 	// TBD by students
 	double CFL_local = CFL_number;
-	MPI_Allreduce(&CFL_local, &CFL_number, 1, MPI_DOUBLE, MPI_MIN, parallel_handler.comm3D);
+	MPI_Allreduce(&CFL_local, &CFL_number, 1, MPI_DOUBLE, MPI_MAX, parallel_handler.comm3D);
 
 #endif
 
-	if(rank==0) {
+	// if(rank==0) {
 		std::cout << " CFL number " << CFL_number << "\n";
-	}
+	// }
 
 	return CFL_number;
 }
